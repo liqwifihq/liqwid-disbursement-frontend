@@ -1,0 +1,135 @@
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import { useEffect, useMemo, useState } from 'react'
+import Layout from '../components/Layout'
+import StatusBadge from '../components/StatusBadge'
+import { api, errorMessage, formatDate, formatMoney, shortId } from '../lib/api'
+import type { Batch } from '../lib/types'
+import { requireAdminPage } from '../lib/session'
+
+export const getServerSideProps = requireAdminPage
+
+export default function Batches() {
+  const router = useRouter()
+  const [batches, setBatches] = useState<Batch[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState('')
+
+  async function fetchBatches(isRefresh = false) {
+    isRefresh ? setRefreshing(true) : setLoading(true)
+    setError('')
+    try {
+      const response = await api.get<Batch[]>('/batches')
+      setBatches(response.data)
+    } catch (fetchError) {
+      setError(errorMessage(fetchError, 'Batches could not be loaded.'))
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => { fetchBatches() }, [])
+
+  const metrics = useMemo(() => {
+    const transactions = batches.flatMap((batch) => batch.transactions || [])
+    return {
+      total: batches.length,
+      processing: batches.filter((batch) => batch.status === 'processing').length,
+      successful: transactions.filter((transaction) => transaction.status === 'succeeded').length,
+      attention: transactions.filter((transaction) => ['failed', 'pending_review'].includes(transaction.status)).length,
+      volume: batches.reduce((total, batch) => total + Number(batch.totalAmount || 0), 0),
+      transactions: transactions.length,
+    }
+  }, [batches])
+
+  const query = typeof router.query.q === 'string' ? router.query.q.trim().toLowerCase() : ''
+  const filteredBatches = useMemo(() => {
+    if (!query) return batches
+    return batches.filter((batch) => [
+      batch.id,
+      batch.uploadedBy,
+    ].some((value) => value.toLowerCase().includes(query)))
+  }, [batches, query])
+  const primaryCurrency = batches[0]?.transactions?.[0]?.currency || 'NGN'
+
+  return (
+    <Layout>
+      {error && <div className="alert alert-error" role="alert"><strong>Could not load batches</strong><span>{error}</span><button className="btn btn-small" onClick={() => fetchBatches()}>Retry</button></div>}
+
+      <div className="dashboard-content-grid">
+        <div className="dashboard-primary">
+          <p className="period-label">In the last 30 days,</p>
+          <div className="metric-grid figma-metrics">
+            <div className="metric-card figma-stat tone-olive"><div><strong>{metrics.total.toLocaleString()}</strong><span>Payment batches</span></div><i /><b /></div>
+            <div className="metric-card figma-stat tone-sage"><div><strong>{metrics.successful.toLocaleString()}</strong><span>Successful payouts</span></div><i /><b /></div>
+            <div className="metric-card figma-stat tone-forest"><div><strong>{formatMoney(metrics.volume, primaryCurrency)}</strong><span>Total batch value</span></div><i /><b /></div>
+          </div>
+
+          <section className="panel batch-list-panel">
+          <div className="panel-heading compact">
+            <div><div><h2>{query ? 'Search results' : 'All payment batches'}</h2><p>{query ? `${filteredBatches.length} match${filteredBatches.length === 1 ? '' : 'es'} for “${query}”` : 'Most recently uploaded first'}</p></div></div>
+            <button className="btn btn-ghost btn-small" onClick={() => fetchBatches(true)} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Refresh'}</button>
+          </div>
+
+          {loading ? (
+            <div className="skeleton-list" aria-label="Loading batches">{[1, 2, 3].map((item) => <div key={item}><i /><span /><b /></div>)}</div>
+          ) : batches.length === 0 && !error ? (
+            <div className="empty-state"><span>▦</span><h3>No payment batches yet</h3><p>Upload your first CSV to start a controlled disbursement run.</p><Link href="/" className="btn btn-primary">Create first batch</Link></div>
+          ) : filteredBatches.length === 0 ? (
+            <div className="empty-state compact-empty"><span>⌕</span><h3>No matching batches</h3><p>Try a batch ID or operator email.</p><Link href="/batches" className="btn btn-ghost">Clear search</Link></div>
+          ) : (
+            <div className="table-wrap">
+              <table className="batch-table">
+                <thead><tr><th>Batch</th><th>Created</th><th>Transactions</th><th className="right">Total</th><th>Status</th><th aria-label="Actions" /></tr></thead>
+                <tbody>
+                  {filteredBatches.map((batch) => {
+                    const currency = batch.transactions?.[0]?.currency || 'NGN'
+                    return (
+                      <tr key={batch.id}>
+                        <td><Link href={`/batch/${batch.id}`} className="batch-name">Batch {shortId(batch.id)}</Link><small>{batch.uploadedBy}</small></td>
+                        <td>{formatDate(batch.createdAt)}</td>
+                        <td><strong>{(batch.transactions?.length || 0).toLocaleString()}</strong> payments</td>
+                        <td className="right"><strong>{formatMoney(batch.totalAmount, currency)}</strong></td>
+                        <td><StatusBadge status={batch.status} /></td>
+                        <td className="right"><Link href={`/batch/${batch.id}`} className="row-link" aria-label={`View batch ${batch.id}`}>→</Link></td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          </section>
+        </div>
+
+        <aside className="insights-rail">
+          <section className="insight-card">
+            <div className="insight-heading"><h2>Recent batches</h2><Link href="/batches">View all</Link></div>
+            <div className="insight-list">
+              {batches.slice(0, 4).map((batch, index) => (
+                <Link href={`/batch/${batch.id}`} key={batch.id} className="insight-row">
+                  <span className={`insight-avatar avatar-${index % 3}`}>{String(index + 1).padStart(2, '0')}</span>
+                  <p><strong>{shortId(batch.id)}</strong><small>{batch.transactions.length} payments</small></p>
+                  <StatusBadge status={batch.status} />
+                </Link>
+              ))}
+              {!batches.length && <p className="insight-empty">Recent batches will appear here.</p>}
+            </div>
+          </section>
+          <section className="insight-card">
+            <div className="insight-heading"><h2>Payout health</h2></div>
+            <div className="health-list">
+              <div><span><i className="health-dot success" />Successful</span><strong>{metrics.successful}</strong></div>
+              <div><span><i className="health-dot processing" />In progress</span><strong>{metrics.processing}</strong></div>
+              <div><span><i className="health-dot failed" />Needs attention</span><strong>{metrics.attention}</strong></div>
+            </div>
+            <div className="health-total"><span>Transactions tracked</span><strong>{metrics.transactions.toLocaleString()}</strong></div>
+          </section>
+          <div className="dashboard-date"><span>{new Intl.DateTimeFormat('en', { day: '2-digit' }).format(new Date())}</span><span>{new Intl.DateTimeFormat('en', { month: 'short' }).format(new Date())}</span><strong>{new Intl.DateTimeFormat('en', { year: 'numeric' }).format(new Date())}</strong></div>
+        </aside>
+      </div>
+    </Layout>
+  )
+}
