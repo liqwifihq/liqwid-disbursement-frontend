@@ -98,6 +98,14 @@ export default function Home() {
     }
   }
 
+  function resetUpload() {
+    setFile(null)
+    setPreview(null)
+    setCreatedBatchId('')
+    setError('')
+    if (inputRef.current) inputRef.current.value = ''
+  }
+
   function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault()
     setIsDragging(false)
@@ -132,49 +140,54 @@ export default function Home() {
         </div>
       )}
 
-      <section className="panel upload-panel">
-        <div className="panel-heading">
-          <div><span className="panel-number">01</span><div><h2>Upload payment file</h2><p>Use the standard CSV format. Maximum file size is 5 MB.</p></div></div>
-          <a href="/sample-disbursement.csv" download className="text-link">Download template</a>
-        </div>
-        <form onSubmit={upload}>
-          <div
-            className={`dropzone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
-            onDragOver={(event) => { event.preventDefault(); setIsDragging(true) }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={onDrop}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => chooseFile(event.target.files?.[0])}
-              aria-label="Choose CSV file"
-            />
-            <div className="upload-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" /></svg>
+      {!preview && (
+        <section className="panel upload-panel">
+          <div className="panel-heading">
+            <div><span className="panel-number">01</span><div><h2>Upload payment file</h2><p>Use the standard CSV format. Maximum file size is 5 MB.</p></div></div>
+            <a href="/sample-disbursement.csv" download className="text-link">Download template</a>
+          </div>
+          <form onSubmit={upload}>
+            <div
+              className={`dropzone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
+              onDragOver={(event) => { event.preventDefault(); setIsDragging(true) }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={onDrop}
+            >
+              <input
+                ref={inputRef}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => chooseFile(event.target.files?.[0])}
+                aria-label="Choose CSV file"
+              />
+              <div className="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" /></svg>
+              </div>
+              {file ? (
+                <><h3>{file.name}</h3><p>{(file.size / 1024).toFixed(1)} KB · Ready to validate</p></>
+              ) : (
+                <><h3>Drop your CSV file here</h3><p>or <button type="button" className="inline-button" onClick={() => inputRef.current?.click()}>browse your computer</button></p></>
+              )}
+              <small>Required: recipient_name, recipient_email, account_number, bank_code, amount, currency. Payment references are generated automatically.</small>
             </div>
-            {file ? (
-              <><h3>{file.name}</h3><p>{(file.size / 1024).toFixed(1)} KB · Ready to validate</p></>
-            ) : (
-              <><h3>Drop your CSV file here</h3><p>or <button type="button" className="inline-button" onClick={() => inputRef.current?.click()}>browse your computer</button></p></>
-            )}
-            <small>Required: recipient_name, recipient_email, account_number, bank_code, amount, currency. Payment references are generated automatically.</small>
-          </div>
-          <div className="form-actions">
-            {file && <button type="button" className="btn btn-ghost" onClick={() => { setFile(null); setPreview(null); if (inputRef.current) inputRef.current.value = '' }}>Clear</button>}
-            <button className="btn btn-primary" type="submit" disabled={!file || isUploading}>
-              {isUploading ? <><span className="spinner" />Validating file…</> : 'Upload & validate'}
-            </button>
-          </div>
-        </form>
-      </section>
+            <div className="form-actions">
+              {file && <button type="button" className="btn btn-ghost" onClick={resetUpload}>Clear</button>}
+              <button className="btn btn-primary" type="submit" disabled={!file || isUploading}>
+                {isUploading ? <><span className="spinner" />Validating file…</> : 'Upload & validate'}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       {preview && (
         <section className="panel preview-panel">
           <div className="panel-heading">
             <div><span className="panel-number">02</span><div><h2>Review payments</h2><p>Check the summary and resolve any highlighted rows.</p></div></div>
-            <span className={`validation-result ${issues ? 'invalid' : 'valid'}`}>{issues ? `${issues} issue${issues === 1 ? '' : 's'}` : 'All rows valid'}</span>
+            <div className="preview-heading-actions">
+              <button type="button" className="inline-button" onClick={resetUpload}>Upload a different file</button>
+              <span className={`validation-result ${issues ? 'invalid' : 'valid'}`}>{issues ? `${issues} issue${issues === 1 ? '' : 's'}` : 'All rows valid'}</span>
+            </div>
           </div>
 
           <div className="summary-grid">
