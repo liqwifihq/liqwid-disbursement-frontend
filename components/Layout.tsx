@@ -32,8 +32,7 @@ export default function Layout({ children, eyebrow, title, description, actions 
     <div className="app-shell figma-shell">
       <aside className="side-nav">
         <Link href="/batches" className="brand" aria-label="LiqWiFi PayOps overview">
-          <img className="brand-mark" src="/Images/Liqwifi_Icon_Circle_Full_DarkM.png" alt="" width={28} height={28} aria-hidden="true" />
-          <span><strong>LiqWiFi</strong><small>PAYOPS</small></span>
+          <img className="brand-logo" src="/Images/Liqwifi_CombMark_Midnight_Sub.png" alt="" />
         </Link>
         <nav className="main-nav" aria-label="Primary navigation">
           <Link href="/batches" className={router.pathname.startsWith('/batch') ? 'active' : ''}><NavIcon name="overview" /><span>Overview</span></Link>
