@@ -224,6 +224,23 @@ export default function Home() {
             <div><span>Validation</span><strong className={issues ? 'danger-text' : 'success-text'}>{issues ? 'Needs attention' : 'Passed'}</strong></div>
           </div>
 
+          <div className="batch-name-bar">
+            <label>
+              Batch name
+              <input
+                type="text"
+                value={batchName}
+                onChange={(event) => setBatchName(event.target.value)}
+                placeholder="e.g. August vendor payouts"
+                maxLength={80}
+                autoComplete="off"
+                disabled={Boolean(createdBatchId)}
+                aria-required="true"
+              />
+            </label>
+            <p className="muted-label">This name appears in batch history.</p>
+          </div>
+
           {accountIssues > 0 && (
             <div className="alert alert-error account-alert" role="alert">
               <strong>{accountIssues} account number{accountIssues === 1 ? '' : 's'} need attention</strong>
@@ -331,22 +348,7 @@ export default function Home() {
           </div>
 
           <div className="create-footer">
-            <div>
-              <label>
-                Batch name
-                <input
-                  type="text"
-                  value={batchName}
-                  onChange={(event) => setBatchName(event.target.value)}
-                  placeholder="e.g. August vendor payouts"
-                  maxLength={80}
-                  autoComplete="off"
-                  disabled={Boolean(createdBatchId)}
-                  aria-required="true"
-                />
-              </label>
-              <p className="muted-label">This name appears in batch history. Your operator identity is recorded automatically.</p>
-            </div>
+            <p className="muted-label">Your operator identity is recorded automatically.</p>
             <button className="btn btn-primary btn-large" onClick={createBatch} disabled={Boolean(issues) || isCreating || Boolean(createdBatchId) || batchName.trim().length < 2}>
               {isCreating ? <><span className="spinner" />Creating batch…</> : createdBatchId ? 'Batch created' : 'Create payment batch'}
             </button>

@@ -158,11 +158,12 @@ td strong { color: var(--ink); font-size: 11px; }
 .row-check { width: 20px; height: 20px; display: grid; place-items: center; color: var(--green); background: var(--green-soft); border-radius: 50%; font-size: 10px; font-weight: 900; }
 .row-check.bad { color: var(--red); background: var(--red-soft); }
 .table-note { margin: 0; padding: 12px 20px; color: var(--muted); border-top: 1px solid var(--line); font-size: 10px; }
+.batch-name-bar { padding: 16px 24px 18px; border-bottom: 1px solid var(--line); background: #faf9fb; }
+.batch-name-bar label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.batch-name-bar input { width: min(520px, 100%); height: 39px; padding: 0 11px; border: 1px solid #dcd8e2; border-radius: 5px; background: white; color: var(--ink); outline: 0; text-transform: none; letter-spacing: 0; }
+.batch-name-bar input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-soft); }
+.batch-name-bar .muted-label { margin: 8px 0 0; }
 .create-footer { padding: 18px 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; background: #faf9fb; border-top: 1px solid var(--line); }
-.create-footer > div:first-child { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.create-footer label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-.create-footer input { width: 320px; max-width: 100%; height: 39px; padding: 0 11px; border: 1px solid #dcd8e2; border-radius: 5px; background: white; color: var(--ink); outline: 0; text-transform: none; letter-spacing: 0; }
-.create-footer input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-soft); }
 .create-footer .muted-label { margin: 0; }
 
 .metric-grid { margin-bottom: 22px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -385,7 +386,8 @@ footer { height: 60px; padding: 0 max(24px, calc((100vw - 1164px) / 2)); display
   .panel-heading { padding: 17px; }.panel-heading p { display: none; }
   .upload-panel form { padding: 14px; }.dropzone { min-height: 210px; padding: 24px 14px; }.dropzone small { line-height: 1.5; }
   .summary-grid { grid-template-columns: repeat(2, 1fr); }.summary-grid > div:nth-child(2) { border-right: 0; }.summary-grid > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-  .create-footer { align-items: stretch; flex-direction: column; }.create-footer input { width: 100%; }.create-footer .btn { width: 100%; }
+  .create-footer { align-items: stretch; flex-direction: column; }.create-footer .btn { width: 100%; }
+  .batch-name-bar input { width: 100%; }
   .alert { grid-template-columns: 1fr; }
   .figma-metrics { grid-template-columns: 1fr; gap: 9px; }.metric-card.figma-stat { min-height: 82px; }
   .insights-rail { grid-template-columns: 1fr; }
