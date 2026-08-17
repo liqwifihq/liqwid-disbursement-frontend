@@ -1,2 +1,2 @@
-recipient_name,recipient_email,account_number,bank_code,amount,currency
-Kora Sandbox User,sandbox.user@example.com,0000000000,033,1000.00,NGN
+recipient_name,recipient_email,account_number,bank_code,amount,currency,transaction_reference
+Kora Sandbox User,sandbox.user@example.com,0000000000,033,1000.00,NGN,Salary Payment

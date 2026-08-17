@@ -1,3 +1,3 @@
-recipient_name,recipient_email,account_number,bank_code,amount,currency
-Ada Okafor,ada@example.com,0123456789,044,125000.00,NGN
-Tunde Balogun,tunde@example.com,9876543210,058,87500.50,NGN
+recipient_name,recipient_email,account_number,bank_code,amount,currency,transaction_reference
+Ada Okafor,ada@example.com,0123456789,044,125000.00,NGN,Salary Payment
+Tunde Balogun,tunde@example.com,9876543210,058,87500.50,NGN,Salary Payment

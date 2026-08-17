@@ -195,7 +195,7 @@ export default function Home() {
               ) : (
                 <><h3>Drop your CSV file here</h3><p>or <button type="button" className="inline-button" onClick={() => inputRef.current?.click()}>browse your computer</button></p></>
               )}
-              <small>Required: recipient_name, recipient_email, account_number (10 digits), bank_code, amount, currency. Payment references are generated automatically.</small>
+              <small>Required: recipient_name, recipient_email, account_number (10 digits), bank_code, amount, currency, transaction_reference (for example Salary Payment). A unique payment ID is still generated automatically.</small>
             </div>
             <div className="form-actions">
               {file && <button type="button" className="btn btn-ghost" onClick={resetUpload}>Clear</button>}
@@ -267,7 +267,7 @@ export default function Home() {
 
           <div className="table-wrap">
             <table className="preview-table">
-              <thead><tr><th>Recipient</th><th>Account</th><th>Bank</th><th>Reference</th><th className="right">Amount</th><th>Check</th></tr></thead>
+              <thead><tr><th>Recipient</th><th>Account</th><th>Bank</th><th>Transaction reference</th><th className="right">Amount</th><th>Check</th></tr></thead>
               <tbody>
                 {preview.rows.map((row, index) => {
                   const csvRow = index + 2
@@ -326,7 +326,17 @@ export default function Home() {
                           ariaLabel={`Bank code for row ${index + 1}`}
                         />
                       </td>
-                      <td className="muted-label">Generated automatically</td>
+                      <td>
+                        <PreviewField
+                          value={row.transaction_reference}
+                          onChange={(value) => updateRow(index, 'transaction_reference', value)}
+                          invalid={Boolean(fieldErrors.transaction_reference)}
+                          hint={fieldErrors.transaction_reference}
+                          placeholder="e.g. Salary Payment"
+                          disabled={locked}
+                          ariaLabel={`Transaction reference for row ${index + 1}`}
+                        />
+                      </td>
                       <td className="right">
                         <PreviewField
                           value={row.amount}

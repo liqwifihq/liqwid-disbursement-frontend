@@ -9,6 +9,7 @@ const REQUIRED_COLUMNS: (keyof UploadRow)[] = [
   'bank_code',
   'amount',
   'currency',
+  'transaction_reference',
 ]
 
 const MONEY_PATTERN = /^(0|[1-9]\d{0,15})(?:\.(\d{1,2}))?$/
@@ -84,6 +85,12 @@ export function validateRows(rows: UploadRow[]): RowError[] {
     if (row.recipient_name.trim().length < 2 || row.recipient_name.trim().length > 120) invalid.push('recipient_name')
     if (row.recipient_email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.recipient_email.trim())) {
       invalid.push('recipient_email')
+    }
+    const narration = row.transaction_reference.trim().replace(/\s+/g, ' ')
+    if (narration.length < 3) {
+      rowErrors.push({ row: csvRow, fields: ['transaction_reference'], message: 'Transaction reference must be at least 3 characters.' })
+    } else if (narration.length > 80) {
+      rowErrors.push({ row: csvRow, fields: ['transaction_reference'], message: 'Transaction reference must be 80 characters or fewer.' })
     }
 
     const destination = `${currency}:${row.bank_code.trim().toUpperCase()}:${row.account_number.trim()}`

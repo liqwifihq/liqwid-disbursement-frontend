@@ -118,14 +118,14 @@ export default function BatchPage() {
         <div className="panel-heading compact"><div><div><h2>Transactions</h2><p>Individual payout status and destination details</p></div></div><span className="muted-label">Auto-refreshes while processing</span></div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Recipient</th><th>Account</th><th>Bank</th><th>Reference</th><th className="right">Amount</th><th>Status</th></tr></thead>
+            <thead><tr><th>Recipient</th><th>Account</th><th>Bank</th><th>Transaction reference</th><th className="right">Amount</th><th>Status</th></tr></thead>
             <tbody>
               {batch.transactions.map((transaction) => (
                 <tr key={transaction.id}>
                   <td><strong>{transaction.recipientName || '—'}</strong>{transaction.recipientEmail && <small className="table-subtext">{transaction.recipientEmail}</small>}</td>
                   <td className="mono">{transaction.accountNumber || '—'}</td>
                   <td>{transaction.bankCode || '—'}</td>
-                  <td className="mono">{transaction.reference || '—'}</td>
+                  <td><strong>{transaction.narration || '—'}</strong><small className="table-subtext mono">{transaction.reference || '—'}</small></td>
                   <td className="right"><strong>{formatMoney(transaction.amount || 0, transaction.currency)}</strong></td>
                   <td><StatusBadge status={transaction.status} /></td>
                 </tr>

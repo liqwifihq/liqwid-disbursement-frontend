@@ -7,6 +7,7 @@ export type Transaction = {
   amount?: string
   currency: string
   reference?: string
+  narration?: string | null
   status: string
   createdAt?: string
 }
@@ -31,6 +32,7 @@ export type UploadRow = {
   bank_code: string
   amount: string
   currency: string
+  transaction_reference: string
 }
 
 export type RowError = { row: number; fields: string[]; message: string }
