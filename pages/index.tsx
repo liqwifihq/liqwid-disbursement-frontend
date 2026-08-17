@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import { api, errorMessage, formatMoney } from '../lib/api'
-import type { Preview } from '../lib/types'
+import type { Preview, UploadRow } from '../lib/types'
 import { requireAdminPage } from '../lib/session'
+import { accountNumberHint, fieldErrorsForRow, validateRows } from '../lib/validateRows'
 
 export const getServerSideProps = requireAdminPage
 
@@ -16,6 +17,7 @@ export default function Home() {
   const [isCreating, setIsCreating] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
+  const [batchName, setBatchName] = useState('')
   const [createdBatchId, setCreatedBatchId] = useState('')
   const [uploadToast, setUploadToast] = useState<{
     tone: 'success' | 'warning' | 'error'
@@ -39,6 +41,10 @@ export default function Home() {
     () => new Set(preview?.rowErrors.filter((item) => item.row > 0).map((item) => item.row) || []),
     [preview],
   )
+  const accountIssues = useMemo(
+    () => preview?.rowErrors.filter((item) => item.fields.includes('account_number') && item.message.includes('10')).length || 0,
+    [preview],
+  )
 
   function chooseFile(nextFile?: File) {
     if (!nextFile) return
@@ -52,6 +58,9 @@ export default function Home() {
     setPreview(null)
     setCreatedBatchId('')
     setError('')
+    if (!batchName.trim()) {
+      setBatchName(nextFile.name.replace(/\.csv$/i, '').replace(/[_-]+/g, ' ').trim().slice(0, 80))
+    }
   }
 
   async function upload(event: FormEvent) {
@@ -63,8 +72,12 @@ export default function Home() {
     setError('')
     try {
       const response = await axios.post<Preview>('/api/upload', data)
-      setPreview(response.data)
-      const uploadIssues = response.data.rowErrors.length + (response.data.parseErrors?.length || 0)
+      const nextPreview = {
+        ...response.data,
+        rowErrors: validateRows(response.data.rows),
+      }
+      setPreview(nextPreview)
+      const uploadIssues = nextPreview.rowErrors.length + (nextPreview.parseErrors?.length || 0)
       setUploadToast({
         tone: uploadIssues ? 'warning' : 'success',
         title: 'Upload complete',
@@ -84,10 +97,14 @@ export default function Home() {
 
   async function createBatch() {
     if (!preview || issues) return
+    const name = batchName.trim().replace(/\s+/g, ' ')
+    if (name.length < 2) return setError('Enter a batch name of at least 2 characters.')
+    if (name.length > 80) return setError('Batch name must be 80 characters or fewer.')
     setIsCreating(true)
     setError('')
     try {
       const response = await api.post<{ batchId: string }>('/files/create-batch', {
+        name,
         rows: preview.rows,
       })
       setCreatedBatchId(response.data.batchId)
@@ -98,9 +115,19 @@ export default function Home() {
     }
   }
 
+  function updateRow(index: number, field: keyof UploadRow, value: string) {
+    setPreview((current) => {
+      if (!current) return current
+      const rows = current.rows.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row))
+      return { ...current, rows, rowErrors: validateRows(rows) }
+    })
+    setError('')
+  }
+
   function resetUpload() {
     setFile(null)
     setPreview(null)
+    setBatchName('')
     setCreatedBatchId('')
     setError('')
     if (inputRef.current) inputRef.current.value = ''
@@ -116,7 +143,7 @@ export default function Home() {
     <Layout
       eyebrow="Disbursements / New batch"
       title="Create a payment batch"
-      description="Upload a validated CSV, review every payment, then create a batch ready for approval."
+      description="Upload a CSV, correct any issues in the table, then create a batch ready for approval."
     >
       {uploadToast && (
         <div className={`upload-toast upload-toast-${uploadToast.tone}`} role={uploadToast.tone === 'error' ? 'alert' : 'status'} aria-live="polite">
@@ -168,7 +195,7 @@ export default function Home() {
               ) : (
                 <><h3>Drop your CSV file here</h3><p>or <button type="button" className="inline-button" onClick={() => inputRef.current?.click()}>browse your computer</button></p></>
               )}
-              <small>Required: recipient_name, recipient_email, account_number, bank_code, amount, currency. Payment references are generated automatically.</small>
+              <small>Required: recipient_name, recipient_email, account_number (10 digits), bank_code, amount, currency. Payment references are generated automatically.</small>
             </div>
             <div className="form-actions">
               {file && <button type="button" className="btn btn-ghost" onClick={resetUpload}>Clear</button>}
@@ -183,7 +210,7 @@ export default function Home() {
       {preview && (
         <section className="panel preview-panel">
           <div className="panel-heading">
-            <div><span className="panel-number">02</span><div><h2>Review payments</h2><p>Check the summary and resolve any highlighted rows.</p></div></div>
+            <div><span className="panel-number">02</span><div><h2>Review and correct payments</h2><p>Edit any cell to fix errors without re-uploading the file.</p></div></div>
             <div className="preview-heading-actions">
               <button type="button" className="inline-button" onClick={resetUpload}>Upload a different file</button>
               <span className={`validation-result ${issues ? 'invalid' : 'valid'}`}>{issues ? `${issues} issue${issues === 1 ? '' : 's'}` : 'All rows valid'}</span>
@@ -197,27 +224,104 @@ export default function Home() {
             <div><span>Validation</span><strong className={issues ? 'danger-text' : 'success-text'}>{issues ? 'Needs attention' : 'Passed'}</strong></div>
           </div>
 
+          {accountIssues > 0 && (
+            <div className="alert alert-error account-alert" role="alert">
+              <strong>{accountIssues} account number{accountIssues === 1 ? '' : 's'} need attention</strong>
+              <span>Bank accounts must be exactly 10 digits. Correct the highlighted account fields below.</span>
+            </div>
+          )}
+
           {issues > 0 && (
             <div className="issue-list">
-              {[...preview.rowErrors.map((item) => ({ key: `row-${item.row}-${item.message}`, label: item.row ? `Row ${item.row}` : 'File', message: item.message })),
-                ...(preview.parseErrors || []).map((item, index) => ({ key: `parse-${index}`, label: item.row ? `Row ${item.row}` : 'CSV', message: item.message }))]
-                .map((item) => <div key={item.key}><strong>{item.label}</strong><span>{item.message}</span></div>)}
+              {[...preview.rowErrors.map((item) => ({ key: `row-${item.row}-${item.fields.join('-')}-${item.message}`, row: item.row, label: item.row ? `Row ${item.row}` : 'File', message: item.message })),
+                ...(preview.parseErrors || []).map((item, index) => ({ key: `parse-${index}`, row: item.row, label: item.row ? `Row ${item.row}` : 'CSV', message: item.message }))]
+                .map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="issue-item"
+                    onClick={() => item.row ? document.getElementById(`preview-row-${item.row}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }) : undefined}
+                  >
+                    <strong>{item.label}</strong><span>{item.message}</span>
+                  </button>
+                ))}
             </div>
           )}
 
           <div className="table-wrap">
-            <table>
+            <table className="preview-table">
               <thead><tr><th>Recipient</th><th>Account</th><th>Bank</th><th>Reference</th><th className="right">Amount</th><th>Check</th></tr></thead>
               <tbody>
-                {preview.rows.slice(0, 250).map((row, index) => {
-                  const hasError = invalidRows.has(index + 2)
+                {preview.rows.map((row, index) => {
+                  const csvRow = index + 2
+                  const hasError = invalidRows.has(csvRow)
+                  const fieldErrors = fieldErrorsForRow(preview.rowErrors, csvRow)
+                  const accountHint = accountNumberHint(row.account_number)
+                  const accountInvalid = !accountHint.ok || Boolean(fieldErrors.account_number)
+                  const accountHintText = !accountHint.ok ? accountHint.text : fieldErrors.account_number || accountHint.text
+                  const locked = Boolean(createdBatchId)
                   return (
-                    <tr key={`${row.bank_code}-${row.account_number}-${index}`} className={hasError ? 'row-error' : ''}>
-                      <td><strong>{row.recipient_name || 'Missing name'}</strong><small className="table-subtext">{row.recipient_email}</small></td>
-                      <td className="mono">{row.account_number}</td>
-                      <td>{row.bank_code}</td>
+                    <tr key={index} id={`preview-row-${csvRow}`} className={hasError ? 'row-error' : ''}>
+                      <td>
+                        <div className="preview-name-cell">
+                          <PreviewField
+                            value={row.recipient_name}
+                            onChange={(value) => updateRow(index, 'recipient_name', value)}
+                            invalid={Boolean(fieldErrors.recipient_name)}
+                            hint={fieldErrors.recipient_name}
+                            placeholder="Recipient name"
+                            disabled={locked}
+                            ariaLabel={`Recipient name for row ${index + 1}`}
+                          />
+                          <PreviewField
+                            value={row.recipient_email}
+                            onChange={(value) => updateRow(index, 'recipient_email', value)}
+                            invalid={Boolean(fieldErrors.recipient_email)}
+                            hint={fieldErrors.recipient_email}
+                            placeholder="email@example.com"
+                            disabled={locked}
+                            ariaLabel={`Recipient email for row ${index + 1}`}
+                          />
+                        </div>
+                      </td>
+                      <td>
+                        <PreviewField
+                          value={row.account_number}
+                          onChange={(value) => updateRow(index, 'account_number', value)}
+                          invalid={accountInvalid}
+                          hint={accountHintText}
+                          hintOk={!accountInvalid}
+                          className="mono"
+                          placeholder="10-digit account"
+                          inputMode="numeric"
+                          disabled={locked}
+                          ariaLabel={`Account number for row ${index + 1}`}
+                        />
+                      </td>
+                      <td>
+                        <PreviewField
+                          value={row.bank_code}
+                          onChange={(value) => updateRow(index, 'bank_code', value)}
+                          invalid={Boolean(fieldErrors.bank_code)}
+                          hint={fieldErrors.bank_code}
+                          placeholder="Bank code"
+                          disabled={locked}
+                          ariaLabel={`Bank code for row ${index + 1}`}
+                        />
+                      </td>
                       <td className="muted-label">Generated automatically</td>
-                      <td className="right"><strong>{formatMoney(row.amount, row.currency)}</strong></td>
+                      <td className="right">
+                        <PreviewField
+                          value={row.amount}
+                          onChange={(value) => updateRow(index, 'amount', value)}
+                          invalid={Boolean(fieldErrors.amount)}
+                          hint={fieldErrors.amount}
+                          placeholder="0.00"
+                          className="right"
+                          disabled={locked}
+                          ariaLabel={`Amount for row ${index + 1}`}
+                        />
+                      </td>
                       <td><span className={hasError ? 'row-check bad' : 'row-check'}>{hasError ? '!' : '✓'}</span></td>
                     </tr>
                   )
@@ -225,16 +329,72 @@ export default function Home() {
               </tbody>
             </table>
           </div>
-          {preview.rows.length > 250 && <p className="table-note">Showing the first 250 of {preview.rows.length.toLocaleString()} payments.</p>}
 
           <div className="create-footer">
-            <p className="muted-label">Your authenticated operator identity will be recorded automatically.</p>
-            <button className="btn btn-primary btn-large" onClick={createBatch} disabled={Boolean(issues) || isCreating || Boolean(createdBatchId)}>
+            <div>
+              <label>
+                Batch name
+                <input
+                  type="text"
+                  value={batchName}
+                  onChange={(event) => setBatchName(event.target.value)}
+                  placeholder="e.g. August vendor payouts"
+                  maxLength={80}
+                  autoComplete="off"
+                  disabled={Boolean(createdBatchId)}
+                  aria-required="true"
+                />
+              </label>
+              <p className="muted-label">This name appears in batch history. Your operator identity is recorded automatically.</p>
+            </div>
+            <button className="btn btn-primary btn-large" onClick={createBatch} disabled={Boolean(issues) || isCreating || Boolean(createdBatchId) || batchName.trim().length < 2}>
               {isCreating ? <><span className="spinner" />Creating batch…</> : createdBatchId ? 'Batch created' : 'Create payment batch'}
             </button>
           </div>
         </section>
       )}
     </Layout>
+  )
+}
+
+type PreviewFieldProps = {
+  value: string
+  onChange: (value: string) => void
+  invalid?: boolean
+  hint?: string
+  hintOk?: boolean
+  placeholder?: string
+  className?: string
+  inputMode?: 'numeric' | 'text'
+  disabled?: boolean
+  ariaLabel: string
+}
+
+function PreviewField({
+  value,
+  onChange,
+  invalid,
+  hint,
+  hintOk,
+  placeholder,
+  className,
+  inputMode,
+  disabled,
+  ariaLabel,
+}: PreviewFieldProps) {
+  return (
+    <label className="preview-field">
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className={`preview-input ${invalid ? 'invalid' : ''} ${className || ''}`}
+        inputMode={inputMode}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-invalid={invalid}
+      />
+      {hint && <small className={`field-hint ${hintOk ? 'ok' : 'bad'}`}>{hint}</small>}
+    </label>
   )
 }

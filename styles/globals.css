@@ -126,10 +126,23 @@ h1 { margin-bottom: 9px; font-size: clamp(28px, 4vw, 38px); line-height: 1.1; le
 .danger-text { color: var(--red); }
 .success-text { color: var(--green); }
 .issue-list { margin: 18px 24px 0; border: 1px solid #f1c9cd; border-radius: 6px; background: var(--red-soft); overflow: hidden; }
-.issue-list > div { padding: 9px 12px; display: flex; gap: 12px; border-bottom: 1px solid #f1dadd; font-size: 11px; }
-.issue-list > div:last-child { border-bottom: 0; }
-.issue-list strong { min-width: 55px; color: var(--red); }
-.issue-list span { color: #755155; }
+.issue-list > div, .issue-item { width: 100%; padding: 9px 12px; display: flex; gap: 12px; border: 0; border-bottom: 1px solid #f1dadd; background: transparent; font-size: 11px; text-align: left; }
+.issue-list > div:last-child, .issue-item:last-child { border-bottom: 0; }
+.issue-list strong, .issue-item strong { min-width: 55px; color: var(--red); }
+.issue-list span, .issue-item span { color: #755155; }
+.issue-item:hover { background: #fff7f8; }
+.preview-panel .account-alert { margin: 16px 24px 0; }
+.preview-table td { height: auto; min-height: 60px; padding: 10px 12px; vertical-align: top; white-space: normal; }
+.preview-name-cell { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
+.preview-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.preview-input { width: 100%; min-width: 0; height: 32px; padding: 0 8px; border: 1px solid #dcd8e2; border-radius: 4px; background: white; color: var(--ink); outline: 0; }
+.preview-input.mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; letter-spacing: .3px; }
+.preview-input.right { text-align: right; }
+.preview-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-soft); }
+.preview-input.invalid { border-color: #f1c9cd; background: #fffafa; color: var(--red); }
+.preview-input.invalid:focus { box-shadow: 0 0 0 3px var(--red-soft); }
+.field-hint { color: var(--red); font-size: 9px; font-weight: 650; line-height: 1.35; }
+.field-hint.ok { color: var(--green); }
 
 .table-wrap { width: 100%; overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
@@ -141,13 +154,16 @@ td strong { color: var(--ink); font-size: 11px; }
 .right { text-align: right; }
 .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 10px; }
 .row-error td { background: #fffafa; }
+.preview-table tbody tr.row-error:hover td { background: #fffafa; }
 .row-check { width: 20px; height: 20px; display: grid; place-items: center; color: var(--green); background: var(--green-soft); border-radius: 50%; font-size: 10px; font-weight: 900; }
 .row-check.bad { color: var(--red); background: var(--red-soft); }
 .table-note { margin: 0; padding: 12px 20px; color: var(--muted); border-top: 1px solid var(--line); font-size: 10px; }
 .create-footer { padding: 18px 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; background: #faf9fb; border-top: 1px solid var(--line); }
+.create-footer > div:first-child { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .create-footer label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-.create-footer input { width: 260px; height: 39px; padding: 0 11px; border: 1px solid #dcd8e2; border-radius: 5px; background: white; color: var(--ink); outline: 0; text-transform: none; letter-spacing: 0; }
+.create-footer input { width: 320px; max-width: 100%; height: 39px; padding: 0 11px; border: 1px solid #dcd8e2; border-radius: 5px; background: white; color: var(--ink); outline: 0; text-transform: none; letter-spacing: 0; }
 .create-footer input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px var(--purple-soft); }
+.create-footer .muted-label { margin: 0; }
 
 .metric-grid { margin-bottom: 22px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .metric-card { min-height: 112px; padding: 20px; display: flex; align-items: center; gap: 14px; background: white; border: 1px solid var(--line); border-radius: 7px; box-shadow: var(--shadow); }

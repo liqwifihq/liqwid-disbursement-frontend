@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 import Layout from '../components/Layout'
 import StatusBadge from '../components/StatusBadge'
-import { api, errorMessage, formatDate, formatMoney, shortId } from '../lib/api'
+import { api, batchDisplayName, errorMessage, formatDate, formatMoney } from '../lib/api'
 import type { Batch } from '../lib/types'
 import { requireAdminPage } from '../lib/session'
 
@@ -49,8 +49,9 @@ export default function Batches() {
     if (!query) return batches
     return batches.filter((batch) => [
       batch.id,
+      batch.name,
       batch.uploadedBy,
-    ].some((value) => value.toLowerCase().includes(query)))
+    ].some((value) => value?.toLowerCase().includes(query)))
   }, [batches, query])
   const primaryCurrency = batches[0]?.transactions?.[0]?.currency || 'NGN'
 
@@ -78,7 +79,7 @@ export default function Batches() {
           ) : batches.length === 0 && !error ? (
             <div className="empty-state"><span>▦</span><h3>No payment batches yet</h3><p>Upload your first CSV to start a controlled disbursement run.</p><Link href="/" className="btn btn-primary">Create first batch</Link></div>
           ) : filteredBatches.length === 0 ? (
-            <div className="empty-state compact-empty"><span>⌕</span><h3>No matching batches</h3><p>Try a batch ID or operator email.</p><Link href="/batches" className="btn btn-ghost">Clear search</Link></div>
+            <div className="empty-state compact-empty"><span>⌕</span><h3>No matching batches</h3><p>Try a batch name, ID, or operator email.</p><Link href="/batches" className="btn btn-ghost">Clear search</Link></div>
           ) : (
             <div className="table-wrap">
               <table className="batch-table">
@@ -88,7 +89,7 @@ export default function Batches() {
                     const currency = batch.transactions?.[0]?.currency || 'NGN'
                     return (
                       <tr key={batch.id}>
-                        <td><Link href={`/batch/${batch.id}`} className="batch-name">Batch {shortId(batch.id)}</Link><small>{batch.uploadedBy}</small></td>
+                        <td><Link href={`/batch/${batch.id}`} className="batch-name">{batchDisplayName(batch)}</Link><small>{batch.uploadedBy}</small></td>
                         <td>{formatDate(batch.createdAt)}</td>
                         <td><strong>{(batch.transactions?.length || 0).toLocaleString()}</strong> payments</td>
                         <td className="right"><strong>{formatMoney(batch.totalAmount, currency)}</strong></td>
@@ -111,7 +112,7 @@ export default function Batches() {
               {batches.slice(0, 4).map((batch, index) => (
                 <Link href={`/batch/${batch.id}`} key={batch.id} className="insight-row">
                   <span className={`insight-avatar avatar-${index % 3}`}>{String(index + 1).padStart(2, '0')}</span>
-                  <p><strong>{shortId(batch.id)}</strong><small>{batch.transactions.length} payments</small></p>
+                  <p><strong>{batchDisplayName(batch)}</strong><small>{batch.transactions.length} payments</small></p>
                   <StatusBadge status={batch.status} />
                 </Link>
               ))}

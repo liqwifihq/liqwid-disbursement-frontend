@@ -88,7 +88,7 @@ export default function Layout({ children, eyebrow, title, description, actions 
         <header className="topbar">
           <form className="global-search" action="/batches" method="get">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg>
-            <input name="q" defaultValue={typeof router.query.q === 'string' ? router.query.q : ''} placeholder="Search batches, references" aria-label="Search batches" />
+            <input name="q" defaultValue={typeof router.query.q === 'string' ? router.query.q : ''} placeholder="Search batch names, references" aria-label="Search batches" />
           </form>
           <div className="topbar-account">
             <button className="notification-button" type="button" aria-label="Notifications"><span /></button>

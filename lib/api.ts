@@ -49,3 +49,8 @@ export function formatDate(value?: string) {
 export function shortId(value: string) {
   return value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value
 }
+
+export function batchDisplayName(batch: { id: string; name?: string | null }) {
+  const name = batch.name?.trim()
+  return name || `Batch ${shortId(batch.id)}`
+}

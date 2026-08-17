@@ -13,6 +13,7 @@ export type Transaction = {
 
 export type Batch = {
   id: string
+  name?: string | null
   uploadedBy: string
   totalAmount: string
   status: string

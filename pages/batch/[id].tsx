@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import ConfirmModal from '../../components/ConfirmModal'
 import Layout from '../../components/Layout'
 import StatusBadge from '../../components/StatusBadge'
-import { api, errorMessage, formatDate, formatMoney, shortId } from '../../lib/api'
+import { api, batchDisplayName, errorMessage, formatDate, formatMoney } from '../../lib/api'
 import type { Batch } from '../../lib/types'
 import { requireAdminPage } from '../../lib/session'
 
@@ -90,7 +90,7 @@ export default function BatchPage() {
   return (
     <Layout
       eyebrow="Disbursements / Batch detail"
-      title={`Batch ${shortId(batch.id)}`}
+      title={batchDisplayName(batch)}
       description={`Created ${formatDate(batch.createdAt)} by ${batch.uploadedBy}`}
       actions={<>
         {batch.status === 'ready' && <button className="btn btn-primary" onClick={() => setConfirmKind('approve')} disabled={Boolean(action)}>{action === 'approve' ? 'Approving…' : 'Approve batch'}</button>}
