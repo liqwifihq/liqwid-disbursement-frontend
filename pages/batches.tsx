@@ -9,12 +9,15 @@ import { requireAdminPage } from '../lib/session'
 
 export const getServerSideProps = requireAdminPage
 
+const PAGE_SIZE = 10
+
 export default function Batches() {
   const router = useRouter()
   const [batches, setBatches] = useState<Batch[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const [page, setPage] = useState(1)
 
   async function fetchBatches(isRefresh = false) {
     isRefresh ? setRefreshing(true) : setLoading(true)
@@ -53,6 +56,13 @@ export default function Batches() {
       batch.uploadedBy,
     ].some((value) => value?.toLowerCase().includes(query)))
   }, [batches, query])
+  useEffect(() => { setPage(1) }, [query])
+
+  const pageCount = Math.max(1, Math.ceil(filteredBatches.length / PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount)
+  const pagedBatches = filteredBatches.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const rangeStart = filteredBatches.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filteredBatches.length)
   const primaryCurrency = batches[0]?.transactions?.[0]?.currency || 'NGN'
 
   return (
@@ -70,7 +80,7 @@ export default function Batches() {
 
           <section className="panel batch-list-panel">
           <div className="panel-heading compact">
-            <div><div><h2>{query ? 'Search results' : 'All payment batches'}</h2><p>{query ? `${filteredBatches.length} match${filteredBatches.length === 1 ? '' : 'es'} for “${query}”` : 'Most recently uploaded first'}</p></div></div>
+            <div><div><h2>{query ? 'Search results' : 'All payment batches'}</h2><p>{query ? `${filteredBatches.length} match${filteredBatches.length === 1 ? '' : 'es'} for “${query}”` : 'Most recently uploaded first · 10 per page'}</p></div></div>
             <button className="btn btn-ghost btn-small" onClick={() => fetchBatches(true)} disabled={refreshing}>{refreshing ? 'Refreshing…' : 'Refresh'}</button>
           </div>
 
@@ -81,11 +91,12 @@ export default function Batches() {
           ) : filteredBatches.length === 0 ? (
             <div className="empty-state compact-empty"><span>⌕</span><h3>No matching batches</h3><p>Try a batch name, ID, or operator email.</p><Link href="/batches" className="btn btn-ghost">Clear search</Link></div>
           ) : (
+            <>
             <div className="table-wrap">
               <table className="batch-table">
                 <thead><tr><th>Batch</th><th>Created</th><th>Transactions</th><th className="right">Total</th><th>Status</th><th aria-label="Actions" /></tr></thead>
                 <tbody>
-                  {filteredBatches.map((batch) => {
+                  {pagedBatches.map((batch) => {
                     const currency = batch.transactions?.[0]?.currency || 'NGN'
                     return (
                       <tr key={batch.id}>
@@ -101,6 +112,27 @@ export default function Batches() {
                 </tbody>
               </table>
             </div>
+            {filteredBatches.length > PAGE_SIZE && (
+              <div className="table-pagination" aria-label="Batch list pages">
+                <span>Showing {rangeStart}–{rangeEnd} of {filteredBatches.length}</span>
+                <div>
+                  <button type="button" className="btn btn-ghost btn-small" onClick={() => setPage(currentPage - 1)} disabled={currentPage <= 1}>Previous</button>
+                  {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
+                    <button
+                      key={pageNumber}
+                      type="button"
+                      className={`page-number${pageNumber === currentPage ? ' active' : ''}`}
+                      onClick={() => setPage(pageNumber)}
+                      aria-current={pageNumber === currentPage ? 'page' : undefined}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+                  <button type="button" className="btn btn-ghost btn-small" onClick={() => setPage(currentPage + 1)} disabled={currentPage >= pageCount}>Next</button>
+                </div>
+              </div>
+            )}
+            </>
           )}
           </section>
         </div>
