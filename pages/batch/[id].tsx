@@ -121,19 +121,22 @@ export default function BatchPage() {
           <table>
             <thead><tr><th>Recipient</th><th>Account</th><th>Bank</th><th>Transaction reference</th><th className="right">Amount</th><th>Status</th></tr></thead>
             <tbody>
-              {batch.transactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td><strong>{transaction.recipientName || '—'}</strong>{transaction.recipientEmail && <small className="table-subtext">{transaction.recipientEmail}</small>}</td>
-                  <td className="mono">{transaction.accountNumber || '—'}</td>
-                  <td>
-                    <strong>{bankNameForCode(transaction.bankCode) || transaction.bankCode || '—'}</strong>
-                    {bankNameForCode(transaction.bankCode) && <small className="table-subtext mono">{transaction.bankCode}</small>}
-                  </td>
-                  <td><strong>{transaction.narration || '—'}</strong><small className="table-subtext mono">{transaction.reference || '—'}</small></td>
-                  <td className="right"><strong>{formatMoney(transaction.amount || 0, transaction.currency)}</strong></td>
-                  <td><StatusBadge status={transaction.status} /></td>
-                </tr>
-              ))}
+              {batch.transactions.map((transaction) => {
+                const bankName = bankNameForCode(transaction.bankCode)
+                return (
+                  <tr key={transaction.id}>
+                    <td><strong>{transaction.recipientName || '—'}</strong>{transaction.recipientEmail && <small className="table-subtext">{transaction.recipientEmail}</small>}</td>
+                    <td className="mono">{transaction.accountNumber || '—'}</td>
+                    <td>
+                      <strong>{bankName || transaction.bankCode || '—'}</strong>
+                      {bankName && <small className="table-subtext mono">{transaction.bankCode}</small>}
+                    </td>
+                    <td><strong>{transaction.narration || '—'}</strong><small className="table-subtext mono">{transaction.reference || '—'}</small></td>
+                    <td className="right"><strong>{formatMoney(transaction.amount || 0, transaction.currency)}</strong></td>
+                    <td><StatusBadge status={transaction.status} /></td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

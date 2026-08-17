@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import { api, errorMessage, formatMoney } from '../lib/api'
-import type { Preview, UploadRow } from '../lib/types'
-import { requireAdminPage } from '../lib/session'
 import { bankNameForCode } from '../lib/banks'
+import { requireAdminPage } from '../lib/session'
+import type { Preview, UploadRow } from '../lib/types'
 import { accountNumberHint, fieldErrorsForRow, validateRows } from '../lib/validateRows'
 
 export const getServerSideProps = requireAdminPage
@@ -281,6 +281,7 @@ export default function Home() {
                   const accountInvalid = !accountHint.ok || Boolean(fieldErrors.account_number)
                   const accountHintText = !accountHint.ok ? accountHint.text : fieldErrors.account_number || accountHint.text
                   const locked = Boolean(createdBatchId)
+                  const bankName = bankNameForCode(row.bank_code)
                   return (
                     <tr key={index} id={`preview-row-${csvRow}`} className={hasError ? 'row-error' : ''}>
                       <td>
@@ -324,8 +325,8 @@ export default function Home() {
                           value={row.bank_code}
                           onChange={(value) => updateRow(index, 'bank_code', value)}
                           invalid={Boolean(fieldErrors.bank_code)}
-                          hint={fieldErrors.bank_code || bankNameForCode(row.bank_code)}
-                          hintOk={!fieldErrors.bank_code && Boolean(bankNameForCode(row.bank_code))}
+                          hint={fieldErrors.bank_code || bankName}
+                          hintOk={!fieldErrors.bank_code && Boolean(bankName)}
                           placeholder="Bank code"
                           disabled={locked}
                           ariaLabel={`Bank code for row ${index + 1}`}

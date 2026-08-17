@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Layout from '../components/Layout'
 import { BANKS } from '../lib/banks'
 import { requireAdminPage } from '../lib/session'
@@ -8,18 +8,23 @@ export const getServerSideProps = requireAdminPage
 export default function BanksPage() {
   const [query, setQuery] = useState('')
   const [copiedCode, setCopiedCode] = useState('')
+  const copiedReset = useRef<number | undefined>(undefined)
+  const search = query.trim()
 
   const filteredBanks = useMemo(() => {
-    const term = query.trim().toLowerCase()
+    const term = search.toLowerCase()
     if (!term) return BANKS
     return BANKS.filter((bank) => bank.name.toLowerCase().includes(term) || bank.code.toLowerCase().includes(term))
-  }, [query])
+  }, [search])
+
+  useEffect(() => () => window.clearTimeout(copiedReset.current), [])
 
   async function copyCode(code: string) {
     try {
       await navigator.clipboard.writeText(code)
       setCopiedCode(code)
-      window.setTimeout(() => setCopiedCode((current) => (current === code ? '' : current)), 1600)
+      window.clearTimeout(copiedReset.current)
+      copiedReset.current = window.setTimeout(() => setCopiedCode(''), 1600)
     } catch {
       setCopiedCode('')
     }
@@ -35,10 +40,10 @@ export default function BanksPage() {
         <div className="panel-heading compact">
           <div>
             <div>
-              <h2>{query.trim() ? 'Search results' : 'All banks'}</h2>
+              <h2>{search ? 'Search results' : 'All banks'}</h2>
               <p>
-                {query.trim()
-                  ? `${filteredBanks.length} match${filteredBanks.length === 1 ? '' : 'es'} for “${query.trim()}”`
+                {search
+                  ? `${filteredBanks.length} match${filteredBanks.length === 1 ? '' : 'es'} for “${search}”`
                   : `${BANKS.length} banks · click a code to copy`}
               </p>
             </div>
