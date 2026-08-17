@@ -32,7 +32,7 @@ export default function Layout({ children, eyebrow, title, description, actions 
     <div className="app-shell figma-shell">
       <aside className="side-nav">
         <Link href="/batches" className="brand" aria-label="LiqWiFi PayOps overview">
-          <span className="brand-mark" aria-hidden="true"><span /></span>
+          <img className="brand-mark" src="/Images/Liqwifi_Icon_Circle_Full_DarkM.png" alt="" width={28} height={28} aria-hidden="true" />
           <span><strong>LiqWiFi</strong><small>PAYOPS</small></span>
         </Link>
         <nav className="main-nav" aria-label="Primary navigation">

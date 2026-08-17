@@ -32,12 +32,10 @@ export default function Login() {
     <div className="login-page">
       <Head><title>Admin sign in · LiqWiFi PayOps</title></Head>
       <div className="login-brand">
-        <span className="brand-mark" aria-hidden="true"><span /></span>
-        <span><strong>LiqWiFi</strong><small>PAYOPS</small></span>
+        <img src="/Images/Liqwifi_CombMark_Midnight_Sub.png" alt="LiqWiFi Finance" />
       </div>
       <main className="login-card">
         <div className="login-heading">
-          <span className="login-lock" aria-hidden="true">⌁</span>
           <p className="eyebrow">Restricted workspace</p>
           <h1>Welcome back</h1>
           <p>Sign in with your administrator credentials to manage payment batches.</p>
@@ -61,7 +59,7 @@ export default function Login() {
         </form>
         <p className="login-help">Credentials are managed through secure environment variables.</p>
       </main>
-      <footer className="login-footer"><span>LIQWIFI FINANCE OPERATIONS</span><span>Protected administrative access</span></footer>
+      <footer className="login-footer"><span>A PRODUCT OF LIQWID FINANCE</span><span>Protected administrative access</span></footer>
     </div>
   )
 }

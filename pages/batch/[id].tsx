@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import ConfirmModal from '../../components/ConfirmModal'
 import Layout from '../../components/Layout'
 import StatusBadge from '../../components/StatusBadge'
 import { api, errorMessage, formatDate, formatMoney, shortId } from '../../lib/api'
@@ -15,6 +16,7 @@ export default function BatchPage() {
   const [batch, setBatch] = useState<Batch | null>(null)
   const [loading, setLoading] = useState(true)
   const [action, setAction] = useState<'approve' | 'disburse' | ''>('')
+  const [confirmKind, setConfirmKind] = useState<'approve' | 'disburse' | null>(null)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -51,8 +53,7 @@ export default function BatchPage() {
 
   async function approve() {
     if (!batch) return
-    const confirmed = window.confirm('Approve this batch for payment?')
-    if (!confirmed) return
+    setConfirmKind(null)
     setAction('approve'); setError(''); setNotice('')
     try {
       await api.post(`/batches/${id}/approve`)
@@ -65,8 +66,7 @@ export default function BatchPage() {
 
   async function disburse() {
     if (!batch || !metrics.pending) return
-    const confirmed = window.confirm(`Send ${metrics.pending} pending payment${metrics.pending === 1 ? '' : 's'}? Provider-connected mode sends these payouts to Kora; whether they are sandbox or real is determined by the configured Kora key.`)
-    if (!confirmed) return
+    setConfirmKind(null)
     setAction('disburse'); setError(''); setNotice('')
     try {
       const response = await api.post<{ enqueued: number }>(`/batches/${id}/disburse`)
@@ -93,8 +93,8 @@ export default function BatchPage() {
       title={`Batch ${shortId(batch.id)}`}
       description={`Created ${formatDate(batch.createdAt)} by ${batch.uploadedBy}`}
       actions={<>
-        {batch.status === 'ready' && <button className="btn btn-primary" onClick={approve} disabled={Boolean(action)}>{action === 'approve' ? 'Approving…' : 'Approve batch'}</button>}
-        {batch.status === 'approved' && <button className="btn btn-primary" onClick={disburse} disabled={!metrics.pending || Boolean(action)}>{action === 'disburse' ? 'Queuing…' : `Disburse pending (${metrics.pending})`}</button>}
+        {batch.status === 'ready' && <button className="btn btn-primary" onClick={() => setConfirmKind('approve')} disabled={Boolean(action)}>{action === 'approve' ? 'Approving…' : 'Approve batch'}</button>}
+        {batch.status === 'approved' && <button className="btn btn-primary" onClick={() => setConfirmKind('disburse')} disabled={!metrics.pending || Boolean(action)}>{action === 'disburse' ? 'Queuing…' : `Disburse pending (${metrics.pending})`}</button>}
       </>}
     >
       <Link href="/batches" className="back-link">← Back to batches</Link>
@@ -134,6 +134,25 @@ export default function BatchPage() {
           </table>
         </div>
       </section>
+
+      {confirmKind === 'approve' && (
+        <ConfirmModal
+          title="Approve batch"
+          message="Approve this batch for payment?"
+          confirmLabel="Approve batch"
+          onCancel={() => setConfirmKind(null)}
+          onConfirm={approve}
+        />
+      )}
+      {confirmKind === 'disburse' && (
+        <ConfirmModal
+          title="Disburse payments"
+          message={`Disburse ${metrics.pending} pending payment${metrics.pending === 1 ? '' : 's'}?`}
+          confirmLabel="Disburse"
+          onCancel={() => setConfirmKind(null)}
+          onConfirm={disburse}
+        />
+      )}
     </Layout>
   )
 }
