@@ -352,6 +352,17 @@ footer { height: 60px; padding: 0 max(24px, calc((100vw - 1164px) / 2)); display
 .app-workspace footer { display: none; }
 .login-page { background: radial-gradient(circle at 50% 10%, #f0f4e9 0, var(--canvas) 38%, #f8f9f6 100%); }
 
+.bank-search { height: 35px; min-width: 240px; display: flex; align-items: center; gap: 8px; color: #8a9185; background: #fafbf9; border: 1px solid #edf0ea; border-radius: 4px; }
+.bank-search svg { width: 14px; margin-left: 10px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.bank-search input { width: 100%; height: 100%; padding: 0 12px 0 0; color: var(--ink); background: transparent; border: 0; outline: 0; font-size: 11px; }
+.bank-search input::placeholder { color: #9ca29a; }
+.bank-table td { height: 48px; }
+.bank-code-copy { min-height: 28px; padding: 0; display: inline-flex; align-items: center; gap: 10px; color: inherit; background: none; border: 0; }
+.bank-code-copy .mono { color: var(--ink); font-size: 12px; font-weight: 700; letter-spacing: .3px; }
+.bank-code-copy small { color: var(--purple); font-size: 9px; font-weight: 750; }
+.bank-code-copy:hover small { text-decoration: underline; }
+.bank-list-panel .panel-heading { gap: 14px; flex-wrap: wrap; }
+
 @media (max-width: 1100px) {
   .dashboard-content-grid { grid-template-columns: 1fr; }
   .insights-rail { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
@@ -390,6 +401,7 @@ footer { height: 60px; padding: 0 max(24px, calc((100vw - 1164px) / 2)); display
   h1 { font-size: 29px; }
   .steps { font-size: 0; }.steps .step b { font-size: 10px; }
   .panel-heading { padding: 17px; }.panel-heading p { display: none; }
+  .bank-search { width: 100%; min-width: 0; }
   .upload-panel form { padding: 14px; }.dropzone { min-height: 210px; padding: 24px 14px; }.dropzone small { line-height: 1.5; }
   .summary-grid { grid-template-columns: repeat(2, 1fr); }.summary-grid > div:nth-child(2) { border-right: 0; }.summary-grid > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .create-footer { align-items: stretch; flex-direction: column; }.create-footer .btn { width: 100%; }

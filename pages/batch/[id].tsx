@@ -5,6 +5,7 @@ import ConfirmModal from '../../components/ConfirmModal'
 import Layout from '../../components/Layout'
 import StatusBadge from '../../components/StatusBadge'
 import { api, batchDisplayName, errorMessage, formatDate, formatMoney } from '../../lib/api'
+import { bankNameForCode } from '../../lib/banks'
 import type { Batch } from '../../lib/types'
 import { requireAdminPage } from '../../lib/session'
 
@@ -124,7 +125,10 @@ export default function BatchPage() {
                 <tr key={transaction.id}>
                   <td><strong>{transaction.recipientName || '—'}</strong>{transaction.recipientEmail && <small className="table-subtext">{transaction.recipientEmail}</small>}</td>
                   <td className="mono">{transaction.accountNumber || '—'}</td>
-                  <td>{transaction.bankCode || '—'}</td>
+                  <td>
+                    <strong>{bankNameForCode(transaction.bankCode) || transaction.bankCode || '—'}</strong>
+                    {bankNameForCode(transaction.bankCode) && <small className="table-subtext mono">{transaction.bankCode}</small>}
+                  </td>
                   <td><strong>{transaction.narration || '—'}</strong><small className="table-subtext mono">{transaction.reference || '—'}</small></td>
                   <td className="right"><strong>{formatMoney(transaction.amount || 0, transaction.currency)}</strong></td>
                   <td><StatusBadge status={transaction.status} /></td>

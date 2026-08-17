@@ -89,8 +89,8 @@ export function validateRows(rows: UploadRow[]): RowError[] {
     const narration = row.transaction_reference.trim().replace(/\s+/g, ' ')
     if (narration.length < 3) {
       rowErrors.push({ row: csvRow, fields: ['transaction_reference'], message: 'Transaction reference must be at least 3 characters.' })
-    } else if (narration.length > 80) {
-      rowErrors.push({ row: csvRow, fields: ['transaction_reference'], message: 'Transaction reference must be 80 characters or fewer.' })
+    } else if (narration.length > 40) {
+      rowErrors.push({ row: csvRow, fields: ['transaction_reference'], message: 'Transaction reference must be 40 characters or fewer so banks can display it.' })
     }
 
     const destination = `${currency}:${row.bank_code.trim().toUpperCase()}:${row.account_number.trim()}`

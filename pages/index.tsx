@@ -5,6 +5,7 @@ import Layout from '../components/Layout'
 import { api, errorMessage, formatMoney } from '../lib/api'
 import type { Preview, UploadRow } from '../lib/types'
 import { requireAdminPage } from '../lib/session'
+import { bankNameForCode } from '../lib/banks'
 import { accountNumberHint, fieldErrorsForRow, validateRows } from '../lib/validateRows'
 
 export const getServerSideProps = requireAdminPage
@@ -171,7 +172,10 @@ export default function Home() {
         <section className="panel upload-panel">
           <div className="panel-heading">
             <div><span className="panel-number">01</span><div><h2>Upload payment file</h2><p>Use the standard CSV format. Maximum file size is 5 MB.</p></div></div>
-            <a href="/sample-disbursement.csv" download className="text-link">Download template</a>
+            <div className="preview-heading-actions">
+              <Link href="/banks" className="text-link">Bank code list</Link>
+              <a href="/sample-disbursement.csv" download className="text-link">Download template</a>
+            </div>
           </div>
           <form onSubmit={upload}>
             <div
@@ -195,7 +199,7 @@ export default function Home() {
               ) : (
                 <><h3>Drop your CSV file here</h3><p>or <button type="button" className="inline-button" onClick={() => inputRef.current?.click()}>browse your computer</button></p></>
               )}
-              <small>Required: recipient_name, recipient_email, account_number (10 digits), bank_code, amount, currency, transaction_reference (for example Salary Payment). A unique payment ID is still generated automatically.</small>
+              <small>Required: recipient_name, recipient_email, account_number (10 digits), bank_code, amount, currency, transaction_reference (for example Salary Payment). A unique payment ID is still generated automatically. <Link href="/banks" className="text-link">Look up bank codes</Link>.</small>
             </div>
             <div className="form-actions">
               {file && <button type="button" className="btn btn-ghost" onClick={resetUpload}>Clear</button>}
@@ -320,7 +324,8 @@ export default function Home() {
                           value={row.bank_code}
                           onChange={(value) => updateRow(index, 'bank_code', value)}
                           invalid={Boolean(fieldErrors.bank_code)}
-                          hint={fieldErrors.bank_code}
+                          hint={fieldErrors.bank_code || bankNameForCode(row.bank_code)}
+                          hintOk={!fieldErrors.bank_code && Boolean(bankNameForCode(row.bank_code))}
                           placeholder="Bank code"
                           disabled={locked}
                           ariaLabel={`Bank code for row ${index + 1}`}
@@ -331,7 +336,8 @@ export default function Home() {
                           value={row.transaction_reference}
                           onChange={(value) => updateRow(index, 'transaction_reference', value)}
                           invalid={Boolean(fieldErrors.transaction_reference)}
-                          hint={fieldErrors.transaction_reference}
+                          hint={fieldErrors.transaction_reference || 'Shown as the bank description, max 40 characters'}
+                          hintOk={!fieldErrors.transaction_reference}
                           placeholder="e.g. Salary Payment"
                           disabled={locked}
                           ariaLabel={`Transaction reference for row ${index + 1}`}

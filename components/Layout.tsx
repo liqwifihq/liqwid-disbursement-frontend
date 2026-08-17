@@ -12,10 +12,11 @@ type Props = {
 
 const NAV_COLLAPSED_KEY = 'liqwifi-sidebar-collapsed'
 
-function NavIcon({ name }: { name: 'overview' | 'batch' | 'settings' | 'logout' | 'collapse' | 'expand' }) {
+function NavIcon({ name }: { name: 'overview' | 'batch' | 'banks' | 'settings' | 'logout' | 'collapse' | 'expand' }) {
   const paths = {
     overview: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
     batch: <><path d="M6 3h12v4H6zM5 9h14v12H5z" /><path d="M9 13h6M9 17h4" /></>,
+    banks: <><rect x="3" y="10" width="18" height="11" rx="1" /><path d="M7 10V7a5 5 0 0 1 10 0v3M8 14v3M12 14v3M16 14v3" /></>,
     settings: <><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3h4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" /></>,
     logout: <><path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9" /></>,
     collapse: <><path d="M15 6 9 12l6 6" /></>,
@@ -77,6 +78,7 @@ export default function Layout({ children, eyebrow, title, description, actions 
         <nav className="main-nav" aria-label="Primary navigation">
           <Link href="/batches" className={router.pathname.startsWith('/batch') ? 'active' : ''} title="Overview"><NavIcon name="overview" /><span>Overview</span></Link>
           <Link href="/" className={router.pathname === '/' ? 'active' : ''} title="New batch"><NavIcon name="batch" /><span>New batch</span></Link>
+          <Link href="/banks" className={router.pathname === '/banks' ? 'active' : ''} title="Bank codes"><NavIcon name="banks" /><span>Bank codes</span></Link>
         </nav>
         <div className="side-nav-footer">
           <button type="button" className="sidebar-action" title="Settings"><NavIcon name="settings" /><span>Settings</span></button>
