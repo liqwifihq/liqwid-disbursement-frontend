@@ -1494,12 +1494,15 @@ footer { height: 60px; padding: 0 max(24px, calc((100vw - 1164px) / 2)); display
     flex: none;
     width: 100%;
     min-height: 280px;
+    align-items: center;
     justify-content: center;
   }
 
   .landing-cta-visual img {
     width: min(354px, 100%);
     height: auto;
+    margin: 0 auto;
+    object-position: center bottom;
   }
 }
 
