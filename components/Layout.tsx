@@ -77,7 +77,7 @@ export default function Layout({ children, eyebrow, title, description, actions 
         </button>
         <nav className="main-nav" aria-label="Primary navigation">
           <Link href="/batches" className={router.pathname.startsWith('/batch') ? 'active' : ''} title="Overview"><NavIcon name="overview" /><span>Overview</span></Link>
-          <Link href="/" className={router.pathname === '/' ? 'active' : ''} title="New batch"><NavIcon name="batch" /><span>New batch</span></Link>
+          <Link href="/new" className={router.pathname === '/new' ? 'active' : ''} title="New batch"><NavIcon name="batch" /><span>New batch</span></Link>
           <Link href="/banks" className={router.pathname === '/banks' ? 'active' : ''} title="Bank codes"><NavIcon name="banks" /><span>Bank codes</span></Link>
         </nav>
         <div className="side-nav-footer">

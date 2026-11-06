@@ -18,8 +18,10 @@ export default function Login() {
     setError('')
     try {
       await axios.post('/api/auth/login', { email, password })
-      const requested = typeof router.query.returnTo === 'string' ? router.query.returnTo : '/'
-      const destination = requested.startsWith('/') && !requested.startsWith('//') ? requested : '/'
+      const requested = typeof router.query.returnTo === 'string' ? router.query.returnTo : '/batches'
+      const destination = requested.startsWith('/') && !requested.startsWith('//') && requested !== '/'
+        ? requested
+        : '/batches'
       await router.replace(destination)
     } catch (loginError) {
       setError(errorMessage(loginError, 'Sign in failed.'))

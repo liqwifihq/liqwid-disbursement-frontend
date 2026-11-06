@@ -1,419 +1,392 @@
-import axios from 'axios'
+import Head from 'next/head'
 import Link from 'next/link'
-import { ChangeEvent, DragEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react'
-import Layout from '../components/Layout'
-import { api, errorMessage, formatMoney } from '../lib/api'
-import { bankNameForCode } from '../lib/banks'
-import { requireAdminPage } from '../lib/session'
-import type { Preview, UploadRow } from '../lib/types'
-import { accountNumberHint, fieldErrorsForRow, validateRows } from '../lib/validateRows'
 
-export const getServerSideProps = requireAdminPage
+const PAYOUTS = [
+  { initials: 'AN', name: 'Amara N.', method: 'Bank transfer', amount: '₦50,000.00', status: 'Paid' },
+  { initials: 'TA', name: 'Tunde A.', method: 'Mobile wallet', amount: '₦75,000.00', status: 'Paid' },
+  { initials: 'ZM', name: 'Zainab M.', method: 'Cash pickup', amount: '₦35,000.00', status: 'Ready for pickup' },
+]
 
-export default function Home() {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<Preview | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isCreating, setIsCreating] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const [error, setError] = useState('')
-  const [batchName, setBatchName] = useState('')
-  const [createdBatchId, setCreatedBatchId] = useState('')
-  const [uploadToast, setUploadToast] = useState<{
-    tone: 'success' | 'warning' | 'error'
-    title: string
-    message: string
-  } | null>(null)
+const HOW_IT_WORKS = [
+  {
+    step: '1',
+    title: 'Fund your balance',
+    body: 'Top up your Liqwifi balance by bank transfer, or link an account to refill it automatically.',
+  },
+  {
+    step: '2',
+    title: 'Add your recipients',
+    body: 'Upload a CSV, connect the tool you already use, or call the API. We check every account before money moves.',
+  },
+  {
+    step: '3',
+    title: 'Approve and send',
+    body: 'A teammate reviews the batch and approves it. Liqwifi pays everyone at once, or on the schedule you set.',
+  },
+]
 
-  useEffect(() => {
-    if (!uploadToast) return
-    const timer = window.setTimeout(() => setUploadToast(null), 5000)
-    return () => window.clearTimeout(timer)
-  }, [uploadToast])
+const FEATURES = [
+  {
+    title: 'Bulk payouts',
+    body: 'Send to thousands of recipients in one batch, from a CSV upload or the API.',
+  },
+  {
+    title: 'Three ways to receive',
+    body: 'Bank accounts, mobile wallets and cash pickup points, so people get paid the way that works for them.',
+  },
+  {
+    title: 'Instant or scheduled',
+    body: 'Pay now, or set weekly and monthly runs that go out on their own.',
+  },
+  {
+    title: 'Approvals you control',
+    body: 'Choose who can create, review and release a batch, with spending limits per person.',
+  },
+  {
+    title: 'Live tracking',
+    body: 'Watch each payment move from sent to received, and retry any failure in one click.',
+  },
+  {
+    title: 'Automatic reconciliation',
+    body: 'Every payout matches back to your ledger, with exports ready for your accountant.',
+  },
+]
 
-  const issues = (preview?.rowErrors.length || 0) + (preview?.parseErrors?.length || 0)
-  const currency = preview?.rows[0]?.currency || 'NGN'
-  const total = useMemo(
-    () => preview?.rows.reduce((sum, row) => sum + Number(row.amount || 0), 0) || 0,
-    [preview],
-  )
-  const invalidRows = useMemo(
-    () => new Set(preview?.rowErrors.filter((item) => item.row > 0).map((item) => item.row) || []),
-    [preview],
-  )
-  const accountIssues = useMemo(
-    () => preview?.rowErrors.filter((item) => item.fields.includes('account_number') && item.message.includes('10')).length || 0,
-    [preview],
-  )
+const USE_CASES = [
+  {
+    title: 'Payroll and wages',
+    body: 'Pay casual and field staff on payday, without the bank queue.',
+    tone: 'sky',
+  },
+  {
+    title: 'Gigs and creators',
+    body: 'Settle earnings daily or weekly to drivers, sellers and freelancers.',
+    tone: 'mint',
+  },
+  {
+    title: 'Grants and aid',
+    body: 'Reach beneficiaries directly, with a clear record of who received what.',
+    tone: 'lime',
+  },
+  {
+    title: 'Claims and refunds',
+    body: 'Pay insurance claims and customer refunds in minutes, not days.',
+    tone: 'ink',
+  },
+]
 
-  function chooseFile(nextFile?: File) {
-    if (!nextFile) return
-    if (!nextFile.name.toLowerCase().endsWith('.csv')) {
-      const message = 'Only CSV files are supported.'
-      setError(message)
-      setUploadToast({ tone: 'error', title: 'Upload rejected', message })
-      return
+const DEVELOPER_POINTS = [
+  'Sandbox keys in minutes',
+  'Idempotent requests, so a retry never pays twice',
+  'Webhooks for paid, failed and reversed payments',
+]
+
+const CONTROLS = [
+  {
+    title: 'Role-based access',
+    body: 'Give each teammate only the permissions their job needs.',
+    accent: 'cyan',
+  },
+  {
+    title: 'Two-person approval',
+    body: 'Require a second person to release any batch over a limit you set.',
+    accent: 'teal',
+  },
+  {
+    title: 'Full audit trail',
+    body: 'See who created, approved and changed every payout, and when.',
+    accent: 'lime',
+  },
+  {
+    title: 'Encrypted end to end',
+    body: 'Recipient details and payment data are protected in transit and at rest.',
+    accent: 'teal',
+  },
+]
+
+const FAQ = [
+  {
+    question: 'Who can receive a payout?',
+    answer:
+      'Anyone with a bank account, a mobile wallet or a nearby pickup point. You only need their name and one way to reach them.',
+  },
+  {
+    question: 'How fast do recipients get paid?',
+    answer:
+      'Payouts leave as soon as a batch is approved. The expected arrival time for each channel is shown before you confirm.',
+  },
+  {
+    question: 'What happens if a payment fails?',
+    answer:
+      'We flag it with a reason, return the money to your balance, and let you retry or switch to another channel.',
+  },
+  {
+    question: 'Do I need a developer?',
+    answer:
+      'No. Upload a CSV from the dashboard and you’re done. The API is there when you’re ready for it.',
+  },
+]
+
+const API_SNIPPET = `POST /v1/disbursements
+{
+  "reference": "payroll-nov-2026",
+  "currency": "NGN",
+  "recipients": [
+    {
+      "name": "Amara N.",
+      "amount": 50000.00,
+      "channel": "bank",
+      "account": "0123456789"
+    },
+    {
+      "name": "Tunde A.",
+      "amount": 75000.00,
+      "channel": "wallet",
+      "phone": "+2348000000000"
     }
-    setFile(nextFile)
-    setPreview(null)
-    setCreatedBatchId('')
-    setError('')
-    if (!batchName.trim()) {
-      setBatchName(nextFile.name.replace(/\.csv$/i, '').replace(/[_-]+/g, ' ').trim().slice(0, 80))
-    }
-  }
+  ],
+  "approval": "required"
+}`
 
-  async function upload(event: FormEvent) {
-    event.preventDefault()
-    if (!file) return setError('Choose a CSV file first.')
-    const data = new FormData()
-    data.append('file', file)
-    setIsUploading(true)
-    setError('')
-    try {
-      const response = await axios.post<Preview>('/api/upload', data)
-      const nextPreview = {
-        ...response.data,
-        rowErrors: validateRows(response.data.rows),
-      }
-      setPreview(nextPreview)
-      const uploadIssues = nextPreview.rowErrors.length + (nextPreview.parseErrors?.length || 0)
-      setUploadToast({
-        tone: uploadIssues ? 'warning' : 'success',
-        title: 'Upload complete',
-        message: uploadIssues
-          ? `${response.data.rows.length.toLocaleString()} rows loaded with ${uploadIssues.toLocaleString()} issue${uploadIssues === 1 ? '' : 's'} to review.`
-          : `${response.data.rows.length.toLocaleString()} payment row${response.data.rows.length === 1 ? '' : 's'} uploaded and validated.`,
-      })
-    } catch (uploadError) {
-      const message = errorMessage(uploadError, 'The file could not be uploaded.')
-      setPreview(null)
-      setError(message)
-      setUploadToast({ tone: 'error', title: 'Upload failed', message })
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  async function createBatch() {
-    if (!preview || issues) return
-    const name = batchName.trim().replace(/\s+/g, ' ')
-    if (name.length < 2) return setError('Enter a batch name of at least 2 characters.')
-    if (name.length > 80) return setError('Batch name must be 80 characters or fewer.')
-    setIsCreating(true)
-    setError('')
-    try {
-      const response = await api.post<{ batchId: string }>('/files/create-batch', {
-        name,
-        rows: preview.rows,
-      })
-      setCreatedBatchId(response.data.batchId)
-    } catch (createError) {
-      setError(errorMessage(createError, 'The batch could not be created.'))
-    } finally {
-      setIsCreating(false)
-    }
-  }
-
-  function updateRow(index: number, field: keyof UploadRow, value: string) {
-    setPreview((current) => {
-      if (!current) return current
-      const rows = current.rows.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row))
-      return { ...current, rows, rowErrors: validateRows(rows) }
-    })
-    setError('')
-  }
-
-  function resetUpload() {
-    setFile(null)
-    setPreview(null)
-    setBatchName('')
-    setCreatedBatchId('')
-    setError('')
-    if (inputRef.current) inputRef.current.value = ''
-  }
-
-  function onDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-    setIsDragging(false)
-    chooseFile(event.dataTransfer.files?.[0])
-  }
-
+export default function LandingPage() {
   return (
-    <Layout
-      eyebrow="Disbursements / New batch"
-      title="Create a payment batch"
-      description="Upload a CSV, correct any issues in the table, then create a batch ready for approval."
-    >
-      {uploadToast && (
-        <div className={`upload-toast upload-toast-${uploadToast.tone}`} role={uploadToast.tone === 'error' ? 'alert' : 'status'} aria-live="polite">
-          <span className="upload-toast-icon" aria-hidden="true">{uploadToast.tone === 'success' ? '✓' : uploadToast.tone === 'warning' ? '!' : '×'}</span>
-          <div><strong>{uploadToast.title}</strong><p>{uploadToast.message}</p></div>
-          <button type="button" onClick={() => setUploadToast(null)} aria-label="Dismiss notification">×</button>
-        </div>
-      )}
-      <div className="steps" aria-label="Batch creation progress">
-        <span className="step active"><b>1</b> Upload</span><i />
-        <span className={`step ${preview ? 'active' : ''}`}><b>2</b> Validate</span><i />
-        <span className={`step ${createdBatchId ? 'active' : ''}`}><b>3</b> Create batch</span>
-      </div>
+    <div className="landing-page">
+      <Head>
+        <title>Liqwifi Disburse · Bulk payouts made simple</title>
+        <meta
+          name="description"
+          content="Liqwifi Disburse sends cash payouts in bulk to bank accounts, mobile wallets and pickup points, with approvals, live tracking and automatic reconciliation."
+        />
+      </Head>
 
-      {error && <div className="alert alert-error" role="alert"><strong>Action needed</strong><span>{error}</span></div>}
-      {createdBatchId && (
-        <div className="alert alert-success" role="status">
-          <strong>Batch created successfully</strong>
-          <span>Your payment batch is ready for review and disbursement.</span>
-          <Link className="btn btn-small" href={`/batch/${createdBatchId}`}>Open batch</Link>
+      <header className="landing-nav">
+        <div className="landing-nav-inner">
+          <Link href="/" className="landing-brand" aria-label="Liqwifi Disburse home">
+            <img src="/Images/Liqwifi_CombMark_Midnight_Sub.png" alt="Liqwifi" />
+          </Link>
+          <nav className="landing-nav-links" aria-label="Landing">
+            <a href="#how-it-works">How it works</a>
+            <a href="#features">Features</a>
+            <a href="#use-cases">Use cases</a>
+            <a href="#developers">Developers</a>
+            <a href="#faq">FAQ</a>
+          </nav>
+          <a
+            href="mailto:hello@liqwifi.com?subject=Book%20a%20Liqwifi%20Disburse%20demo"
+            className="landing-btn landing-btn-primary landing-nav-cta"
+          >
+            Book a demo
+          </a>
         </div>
-      )}
+      </header>
 
-      {!preview && (
-        <section className="panel upload-panel">
-          <div className="panel-heading">
-            <div><span className="panel-number">01</span><div><h2>Upload payment file</h2><p>Use the standard CSV format. Maximum file size is 5 MB.</p></div></div>
-            <div className="preview-heading-actions">
-              <Link href="/banks" className="text-link">Bank code list</Link>
-              <a href="/sample-disbursement.csv" download className="text-link">Download template</a>
+      <section className="landing-hero" aria-label="Liqwifi Disburse">
+        <div className="landing-hero-inner">
+          <div className="landing-hero-copy">
+            <h1>Pay a thousand people as easily as one.</h1>
+            <p>
+              Liqwifi Disburse sends cash payouts in bulk to bank accounts, mobile wallets and pickup points,
+              with approvals, live tracking and automatic reconciliation.
+            </p>
+            <div className="landing-hero-actions">
+              <Link href="/login" className="landing-btn landing-btn-primary">Start disbursing</Link>
+              <a href="mailto:hello@liqwifi.com?subject=Book%20a%20Liqwifi%20Disburse%20demo" className="landing-btn landing-btn-outline">
+                Book a demo
+              </a>
             </div>
+            <p className="landing-hero-note">Already on Liqwifi? Turn on Disburse from your dashboard.</p>
           </div>
-          <form onSubmit={upload}>
-            <div
-              className={`dropzone ${isDragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
-              onDragOver={(event) => { event.preventDefault(); setIsDragging(true) }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={onDrop}
-            >
-              <input
-                ref={inputRef}
-                type="file"
-                accept=".csv,text/csv"
-                onChange={(event: ChangeEvent<HTMLInputElement>) => chooseFile(event.target.files?.[0])}
-                aria-label="Choose CSV file"
-              />
-              <div className="upload-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" /></svg>
+
+          <aside className="landing-hero-card" aria-label="Live payout tracking preview">
+            <div className="landing-card-top">
+              <div>
+                <p className="landing-card-meta">Payout batch #2048 · Field team, November</p>
+                <strong className="landing-card-amount">₦5,000,000.00</strong>
               </div>
-              {file ? (
-                <><h3>{file.name}</h3><p>{(file.size / 1024).toFixed(1)} KB · Ready to validate</p></>
-              ) : (
-                <><h3>Drop your CSV file here</h3><p>or <button type="button" className="inline-button" onClick={() => inputRef.current?.click()}>browse your computer</button></p></>
-              )}
-              <small>Required: recipient_name, recipient_email, account_number (10 digits), bank_code, amount, currency, transaction_reference (for example Salary Payment). A unique payment ID is still generated automatically. <Link href="/banks" className="text-link">Look up bank codes</Link>.</small>
+              <span className="landing-card-badge">Sending</span>
             </div>
-            <div className="form-actions">
-              {file && <button type="button" className="btn btn-ghost" onClick={resetUpload}>Clear</button>}
-              <button className="btn btn-primary" type="submit" disabled={!file || isUploading}>
-                {isUploading ? <><span className="spinner" />Validating file…</> : 'Upload & validate'}
-              </button>
-            </div>
-          </form>
-        </section>
-      )}
 
-      {preview && (
-        <section className="panel preview-panel">
-          <div className="panel-heading">
-            <div><span className="panel-number">02</span><div><h2>Review and correct payments</h2><p>Edit any cell to fix errors without re-uploading the file.</p></div></div>
-            <div className="preview-heading-actions">
-              <button type="button" className="inline-button" onClick={resetUpload}>Upload a different file</button>
-              <span className={`validation-result ${issues ? 'invalid' : 'valid'}`}>{issues ? `${issues} issue${issues === 1 ? '' : 's'}` : 'All rows valid'}</span>
+            <div className="landing-progress" aria-hidden="true">
+              <span style={{ width: '72%' }} />
+            </div>
+            <div className="landing-progress-meta">
+              <span>72 of 100 paid</span>
+              <span>72% complete</span>
+            </div>
+
+            <ul className="landing-payout-list">
+              {PAYOUTS.map((payout) => (
+                <li key={payout.initials}>
+                  <span className="landing-avatar" aria-hidden="true">{payout.initials}</span>
+                  <div className="landing-payout-person">
+                    <strong>{payout.name}</strong>
+                    <small>{payout.method}</small>
+                  </div>
+                  <div className="landing-payout-value">
+                    <strong>{payout.amount}</strong>
+                    <small>{payout.status}</small>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="landing-how" aria-labelledby="how-it-works-heading">
+        <div className="landing-how-inner">
+          <div className="landing-how-copy">
+            <h2 id="how-it-works-heading">From spreadsheet to paid in three steps.</h2>
+            <p>No chasing account numbers. No one-by-one transfers.</p>
+          </div>
+          <ol className="landing-how-steps">
+            {HOW_IT_WORKS.map((item) => (
+              <li key={item.step}>
+                <span className="landing-how-number" aria-hidden="true">{item.step}</span>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section id="features" className="landing-features" aria-labelledby="features-heading">
+        <div className="landing-features-inner">
+          <h2 id="features-heading">Everything a payout run needs.</h2>
+          <ul className="landing-features-grid">
+            {FEATURES.map((feature) => (
+              <li key={feature.title}>
+                <h3>{feature.title}</h3>
+                <p>{feature.body}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="use-cases" className="landing-use-cases" aria-labelledby="use-cases-heading">
+        <div className="landing-use-cases-inner">
+          <h2 id="use-cases-heading">Built for anyone who pays people.</h2>
+          <ul className="landing-use-cases-grid">
+            {USE_CASES.map((item) => (
+              <li key={item.title} className={`landing-use-case landing-use-case-${item.tone}`}>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="developers" className="landing-developers" aria-labelledby="developers-heading">
+        <div className="landing-developers-inner">
+          <div className="landing-developers-copy">
+            <h2 id="developers-heading">Disburse from your own product.</h2>
+            <p>One endpoint creates a batch. Webhooks tell you about every status change.</p>
+            <ul>
+              {DEVELOPER_POINTS.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+          </div>
+          <pre className="landing-developers-code" aria-label="Sample disbursement API request">
+            <code>{API_SNIPPET}</code>
+          </pre>
+        </div>
+      </section>
+
+      <section id="security" className="landing-controls" aria-labelledby="controls-heading">
+        <div className="landing-controls-inner">
+          <h2 id="controls-heading">Money out, under control.</h2>
+          <ul className="landing-controls-grid">
+            {CONTROLS.map((item) => (
+              <li key={item.title} className={`landing-control landing-control-${item.accent}`}>
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section id="faq" className="landing-faq" aria-labelledby="faq-heading">
+        <div className="landing-faq-inner">
+          <h2 id="faq-heading">Questions people ask first.</h2>
+          <ul className="landing-faq-grid">
+            {FAQ.map((item) => (
+              <li key={item.question}>
+                <h3>{item.question}</h3>
+                <p>{item.answer}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="landing-cta" aria-labelledby="cta-heading">
+        <div className="landing-cta-band">
+          <div className="landing-cta-copy">
+            <h2 id="cta-heading">Get your first batch out today.</h2>
+            <p>Set up Disburse in minutes from your Liqwifi dashboard.</p>
+            <div className="landing-cta-actions">
+              <Link href="/login" className="landing-btn landing-btn-lime">Start disbursing</Link>
+              <a
+                href="mailto:hello@liqwifi.com?subject=Talk%20to%20Liqwifi%20sales"
+                className="landing-btn landing-btn-ghost"
+              >
+                Talk to sales
+              </a>
             </div>
           </div>
-
-          <div className="summary-grid">
-            <div><span>Transactions</span><strong>{preview.rows.length.toLocaleString()}</strong></div>
-            <div><span>Batch total</span><strong>{formatMoney(total, currency)}</strong></div>
-            <div><span>Currency</span><strong>{currency}</strong></div>
-            <div><span>Validation</span><strong className={issues ? 'danger-text' : 'success-text'}>{issues ? 'Needs attention' : 'Passed'}</strong></div>
+          <div className="landing-cta-visual">
+            <img
+              src="/Images/landing-cta-mark.png"
+              alt=""
+              width={354}
+              height={350}
+            />
           </div>
+        </div>
+      </section>
 
-          <div className="batch-name-bar">
-            <label>
-              Batch name
-              <input
-                type="text"
-                value={batchName}
-                onChange={(event) => setBatchName(event.target.value)}
-                placeholder="e.g. August vendor payouts"
-                maxLength={80}
-                autoComplete="off"
-                disabled={Boolean(createdBatchId)}
-                aria-required="true"
-              />
-            </label>
-            <p className="muted-label">This name appears in batch history.</p>
-          </div>
-
-          {accountIssues > 0 && (
-            <div className="alert alert-error account-alert" role="alert">
-              <strong>{accountIssues} account number{accountIssues === 1 ? '' : 's'} need attention</strong>
-              <span>Bank accounts must be exactly 10 digits. Correct the highlighted account fields below.</span>
+      <footer className="landing-footer">
+        <div className="landing-footer-inner">
+          <div className="landing-footer-top">
+            <div className="landing-footer-brand">
+              <Link href="/" aria-label="Liqwifi Disburse home">
+                <img src="/Images/Liqwifi_CombMark_Duo_White.png" alt="Liqwifi" />
+              </Link>
+              <p>Money that reaches people.</p>
             </div>
-          )}
-
-          {issues > 0 && (
-            <div className="issue-list">
-              {[...preview.rowErrors.map((item) => ({ key: `row-${item.row}-${item.fields.join('-')}-${item.message}`, row: item.row, label: item.row ? `Row ${item.row}` : 'File', message: item.message })),
-                ...(preview.parseErrors || []).map((item, index) => ({ key: `parse-${index}`, row: item.row, label: item.row ? `Row ${item.row}` : 'CSV', message: item.message }))]
-                .map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    className="issue-item"
-                    onClick={() => item.row ? document.getElementById(`preview-row-${item.row}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }) : undefined}
-                  >
-                    <strong>{item.label}</strong><span>{item.message}</span>
-                  </button>
-                ))}
+            <div className="landing-footer-nav">
+              <div>
+                <h4>Disburse</h4>
+                <a href="#how-it-works">Overview</a>
+                <a href="#use-cases">Pricing</a>
+                <a href="#security">Security</a>
+                <a href="#developers">API docs</a>
+              </div>
+              <div>
+                <h4>Company</h4>
+                <a href="mailto:hello@liqwifi.com">About</a>
+                <a href="mailto:hello@liqwifi.com">Careers</a>
+                <a href="mailto:hello@liqwifi.com">Contact</a>
+              </div>
+              <div>
+                <h4>Legal</h4>
+                <a href="mailto:hello@liqwifi.com?subject=Terms">Terms</a>
+                <a href="mailto:hello@liqwifi.com?subject=Privacy">Privacy</a>
+              </div>
             </div>
-          )}
-
-          <div className="table-wrap">
-            <table className="preview-table">
-              <thead><tr><th>Recipient</th><th>Account</th><th>Bank</th><th>Transaction reference</th><th className="right">Amount</th><th>Check</th></tr></thead>
-              <tbody>
-                {preview.rows.map((row, index) => {
-                  const csvRow = index + 2
-                  const hasError = invalidRows.has(csvRow)
-                  const fieldErrors = fieldErrorsForRow(preview.rowErrors, csvRow)
-                  const accountHint = accountNumberHint(row.account_number)
-                  const accountInvalid = !accountHint.ok || Boolean(fieldErrors.account_number)
-                  const accountHintText = !accountHint.ok ? accountHint.text : fieldErrors.account_number || accountHint.text
-                  const locked = Boolean(createdBatchId)
-                  const bankName = bankNameForCode(row.bank_code)
-                  return (
-                    <tr key={index} id={`preview-row-${csvRow}`} className={hasError ? 'row-error' : ''}>
-                      <td>
-                        <div className="preview-name-cell">
-                          <PreviewField
-                            value={row.recipient_name}
-                            onChange={(value) => updateRow(index, 'recipient_name', value)}
-                            invalid={Boolean(fieldErrors.recipient_name)}
-                            hint={fieldErrors.recipient_name}
-                            placeholder="Recipient name"
-                            disabled={locked}
-                            ariaLabel={`Recipient name for row ${index + 1}`}
-                          />
-                          <PreviewField
-                            value={row.recipient_email}
-                            onChange={(value) => updateRow(index, 'recipient_email', value)}
-                            invalid={Boolean(fieldErrors.recipient_email)}
-                            hint={fieldErrors.recipient_email}
-                            placeholder="email@example.com"
-                            disabled={locked}
-                            ariaLabel={`Recipient email for row ${index + 1}`}
-                          />
-                        </div>
-                      </td>
-                      <td>
-                        <PreviewField
-                          value={row.account_number}
-                          onChange={(value) => updateRow(index, 'account_number', value)}
-                          invalid={accountInvalid}
-                          hint={accountHintText}
-                          hintOk={!accountInvalid}
-                          className="mono"
-                          placeholder="10-digit account"
-                          inputMode="numeric"
-                          disabled={locked}
-                          ariaLabel={`Account number for row ${index + 1}`}
-                        />
-                      </td>
-                      <td>
-                        <PreviewField
-                          value={row.bank_code}
-                          onChange={(value) => updateRow(index, 'bank_code', value)}
-                          invalid={Boolean(fieldErrors.bank_code)}
-                          hint={fieldErrors.bank_code || bankName}
-                          hintOk={!fieldErrors.bank_code && Boolean(bankName)}
-                          placeholder="Bank code"
-                          disabled={locked}
-                          ariaLabel={`Bank code for row ${index + 1}`}
-                        />
-                      </td>
-                      <td>
-                        <PreviewField
-                          value={row.transaction_reference}
-                          onChange={(value) => updateRow(index, 'transaction_reference', value)}
-                          invalid={Boolean(fieldErrors.transaction_reference)}
-                          hint={fieldErrors.transaction_reference || 'Shown as the bank description, max 40 characters'}
-                          hintOk={!fieldErrors.transaction_reference}
-                          placeholder="e.g. Salary Payment"
-                          disabled={locked}
-                          ariaLabel={`Transaction reference for row ${index + 1}`}
-                        />
-                      </td>
-                      <td className="right">
-                        <PreviewField
-                          value={row.amount}
-                          onChange={(value) => updateRow(index, 'amount', value)}
-                          invalid={Boolean(fieldErrors.amount)}
-                          hint={fieldErrors.amount}
-                          placeholder="0.00"
-                          className="right"
-                          disabled={locked}
-                          ariaLabel={`Amount for row ${index + 1}`}
-                        />
-                      </td>
-                      <td><span className={hasError ? 'row-check bad' : 'row-check'}>{hasError ? '!' : '✓'}</span></td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
           </div>
-
-          <div className="create-footer">
-            <p className="muted-label">Your operator identity is recorded automatically.</p>
-            <button className="btn btn-primary btn-large" onClick={createBatch} disabled={Boolean(issues) || isCreating || Boolean(createdBatchId) || batchName.trim().length < 2}>
-              {isCreating ? <><span className="spinner" />Creating batch…</> : createdBatchId ? 'Batch created' : 'Create payment batch'}
-            </button>
+          <div className="landing-footer-bottom">
+            <p>© 2026 Liqwifi. All rights reserved.</p>
           </div>
-        </section>
-      )}
-    </Layout>
-  )
-}
-
-type PreviewFieldProps = {
-  value: string
-  onChange: (value: string) => void
-  invalid?: boolean
-  hint?: string
-  hintOk?: boolean
-  placeholder?: string
-  className?: string
-  inputMode?: 'numeric' | 'text'
-  disabled?: boolean
-  ariaLabel: string
-}
-
-function PreviewField({
-  value,
-  onChange,
-  invalid,
-  hint,
-  hintOk,
-  placeholder,
-  className,
-  inputMode,
-  disabled,
-  ariaLabel,
-}: PreviewFieldProps) {
-  return (
-    <label className="preview-field">
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className={`preview-input ${invalid ? 'invalid' : ''} ${className || ''}`}
-        inputMode={inputMode}
-        disabled={disabled}
-        aria-label={ariaLabel}
-        aria-invalid={invalid}
-      />
-      {hint && <small className={`field-hint ${hintOk ? 'ok' : 'bad'}`}>{hint}</small>}
-    </label>
+        </div>
+      </footer>
+    </div>
   )
 }

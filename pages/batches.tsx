@@ -87,7 +87,7 @@ export default function Batches() {
           {loading ? (
             <div className="skeleton-list" aria-label="Loading batches">{[1, 2, 3].map((item) => <div key={item}><i /><span /><b /></div>)}</div>
           ) : batches.length === 0 && !error ? (
-            <div className="empty-state"><span>▦</span><h3>No payment batches yet</h3><p>Upload your first CSV to start a controlled disbursement run.</p><Link href="/" className="btn btn-primary">Create first batch</Link></div>
+            <div className="empty-state"><span>▦</span><h3>No payment batches yet</h3><p>Upload your first CSV to start a controlled disbursement run.</p><Link href="/new" className="btn btn-primary">Create first batch</Link></div>
           ) : filteredBatches.length === 0 ? (
             <div className="empty-state compact-empty"><span>⌕</span><h3>No matching batches</h3><p>Try a batch name, ID, or operator email.</p><Link href="/batches" className="btn btn-ghost">Clear search</Link></div>
           ) : (

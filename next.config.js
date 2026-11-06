@@ -18,6 +18,17 @@ module.exports = {
   poweredByHeader: false,
   experimental: { useTypeScriptCli: false },
   async headers() {
-    return [{ source: '/(.*)', headers: securityHeaders }]
+    // Skip security headers in local dev so Cursor Design Mode / Annotate
+    // can inject its overlay. Keep them for production builds.
+    if (isDev) return []
+
+    // Keep nosniff/CSP off Next internals — Turbopack serves
+    // `_clientMiddlewareManifest.js` as application/json.
+    return [
+      {
+        source: '/((?!_next/).*)',
+        headers: securityHeaders,
+      },
+    ]
   },
 };
