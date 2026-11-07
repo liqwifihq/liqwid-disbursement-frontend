@@ -1503,6 +1503,7 @@ footer { height: 60px; padding: 0 max(24px, calc((100vw - 1164px) / 2)); display
     height: auto;
     margin: 0 auto;
     object-position: center bottom;
+    transform: translateX(28px);
   }
 }
 
